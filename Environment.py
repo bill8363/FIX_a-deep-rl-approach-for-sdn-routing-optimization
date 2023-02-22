@@ -7,6 +7,7 @@ import numpy as np
 from scipy import stats
 import subprocess
 import networkx as nx
+import os
 
 from helper import pretty, softmax
 from Traffic import Traffic
@@ -99,10 +100,16 @@ def omnet_wrapper(env):
     prefix = ''
     if env.CLUSTER == 'arvei':
         prefix = '/scratch/nas/1/giorgio/rlnet/'
-
-    simexe = prefix + 'omnet/' + sim + '/networkRL'
-    simfolder = prefix + 'omnet/' + sim + '/'
-    simini = prefix + 'omnet/' + sim + '/' + 'omnetpp.ini'
+    simexe = 'C:\\omnetpp-4.6\\router\\networkRL'
+    simfolder = 'C:\\omnetpp-4.6\\router\\'
+    simini = 'C:\\omnetpp-4.6\\router\\omnetpp.ini'
+    #sim_path = 'C:/omnetpp-4.6/router/' + sim + '/'
+    #simexe = prefix + sim_path + 'opp_run.exe ' + sim_path + 'networkRL'
+    #simfolder = prefix + sim_path
+    #simini = prefix + sim_path + 'omnetpp.ini'
+    #simexe = prefix + 'C:/omnetpp-4.6/bin/opp_run.exe' + sim + '/networkRL'
+    #simfolder = prefix + 'C:/omnetpp-4.6/bin/opp_run.exe' + sim + '/'
+    #simini = prefix + 'C:/omnetpp-4.6/bin/opp_run.exe' + sim + '/' + 'omnetpp.ini'
 
     try:
         omnet_output = subprocess.check_output([simexe, '-n', simfolder, simini, env.folder + 'folder.ini']).decode()
@@ -124,7 +131,7 @@ def ned_to_capacity(env):
         sim = 'router'
     elif env.ENV == 'balancing':
         sim = 'balancer'
-    NED = 'omnet/' + sim + '/NetworkAll.ned'
+    NED = 'C:/omnetpp-4.6/router/' + sim + '/NetworkAll.ned'
 
     capacity = 0
 
@@ -258,6 +265,7 @@ class OmnetBalancerEnv():
         omnet_wrapper(self)
 
         # read Omnet's output: Delay and Lost
+        print(os.path.exists(self.folder + OMDELAY))
         om_output = file_to_csv(self.folder + OMDELAY)
         self.upd_env_D(csv_to_matrix(om_output, self.ACTIVE_NODES))
         self.upd_env_L(csv_to_lost(om_output))
@@ -298,11 +306,11 @@ class OmnetLinkweightEnv():
 
         self.ACTUM = DDPG_config['ACTUM']
 
-        topology = 'omnet/router/NetworkAll.matrix'
+        topology = 'C:\omnetpp-4.6/router/NetworkAll.matrix'
         self.graph = nx.Graph(np.loadtxt(topology, dtype=int))
         if self.ACTIVE_NODES != self.graph.number_of_nodes():
             return False
-        ports = 'omnet/router/NetworkAll.ports'
+        ports = 'C:\omnetpp-4.6/router/NetworkAll.ports'
         self.ports = np.loadtxt(ports, dtype=int)
 
         self.a_dim = self.graph.number_of_edges()
@@ -452,6 +460,7 @@ class OmnetLinkweightEnv():
         omnet_wrapper(self)
 
         # read Omnet's output: Delay and Lost
+        print(os.path.exists(self.folder + OMDELAY))
         om_output = file_to_csv(self.folder + OMDELAY)
         self.upd_env_D(csv_to_matrix(om_output, self.ACTIVE_NODES))
         self.upd_env_L(csv_to_lost(om_output))
@@ -488,6 +497,7 @@ class OmnetLinkweightEnv():
         omnet_wrapper(self)
 
         # read Omnet's output: Delay and Lost
+        print(os.path.exists(self.folder + OMDELAY))
         om_output = file_to_csv(self.folder + OMDELAY)
         self.upd_env_D(csv_to_matrix(om_output, self.ACTIVE_NODES))
         self.upd_env_L(csv_to_lost(om_output))
