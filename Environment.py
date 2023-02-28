@@ -1,13 +1,10 @@
-"""
-Environment.py
-"""
-__author__ = "giorgio@ac.upc.edu"
-
 import numpy as np
 from scipy import stats
 import subprocess
 import networkx as nx
 import os
+import subprocess
+
 
 from helper import pretty, softmax
 from Traffic import Traffic
@@ -16,7 +13,7 @@ from Traffic import Traffic
 OMTRAFFIC = 'Traffic.txt'
 OMBALANCING = 'Balancing.txt'
 OMROUTING = 'Routing.txt'
-OMDELAY = 'Delay.txt'
+OMDELAY = '\Delay.txt'
 
 TRAFFICLOG = 'TrafficLog.csv'
 BALANCINGLOG = 'BalancingLog.csv'
@@ -96,29 +93,24 @@ def omnet_wrapper(env):
         sim = 'router'
     elif env.ENV == 'balancing':
         sim = 'balancer'
-
     prefix = ''
     if env.CLUSTER == 'arvei':
-        prefix = '/scratch/nas/1/giorgio/rlnet/'
-    simexe = 'C:\\omnetpp-4.6\\router\\networkRL'
-    simfolder = 'C:\\omnetpp-4.6\\router\\'
-    simini = 'C:\\omnetpp-4.6\\router\\omnetpp.ini'
-    #sim_path = 'C:/omnetpp-4.6/router/' + sim + '/'
-    #simexe = prefix + sim_path + 'opp_run.exe ' + sim_path + 'networkRL'
-    #simfolder = prefix + sim_path
-    #simini = prefix + sim_path + 'omnetpp.ini'
-    #simexe = prefix + 'C:/omnetpp-4.6/bin/opp_run.exe' + sim + '/networkRL'
-    #simfolder = prefix + 'C:/omnetpp-4.6/bin/opp_run.exe' + sim + '/'
-    #simini = prefix + 'C:/omnetpp-4.6/bin/opp_run.exe' + sim + '/' + 'omnetpp.ini'
+        prefix = 'C:\\BUG'
+    sim_path = 'C:\\omnetpp-4.6\\' + sim + '\\'
+    simexe = prefix + sim_path + 'networkRL'
+    simfolder = prefix + sim_path
+    simini = prefix + sim_path + 'omnetpp.ini'
 
     try:
-        omnet_output = subprocess.check_output([simexe, '-n', simfolder, simini, env.folder + 'folder.ini']).decode()
+
+
+         omnet_output = subprocess.check_output([simexe, '-n', simfolder, simini, os.path.join(env.folder, 'folder.ini')]).replace("\\", "\\")
     except Exception as e:
         omnet_output = e.stdout.decode()
 
     if 'Error' in omnet_output:
         omnet_output = omnet_output.replace(',', '')
-        o_u_l = [_.strip() for _ in omnet_output.split('\n') if _ != '']
+        o_u_l = [_.strip() for _ in omnet_output.split('\n') if _ is not '']
         omnet_output = ','.join(o_u_l[4:])
     else:
         omnet_output = 'ok'
@@ -131,7 +123,7 @@ def ned_to_capacity(env):
         sim = 'router'
     elif env.ENV == 'balancing':
         sim = 'balancer'
-    NED = 'C:/omnetpp-4.6/router/' + sim + '/NetworkAll.ned'
+    NED = 'C://omnetpp-4.6//router//' + sim + '//NetworkAll.ned'
 
     capacity = 0
 
@@ -157,7 +149,7 @@ class OmnetBalancerEnv():
         self.ROUTING = 'Balancer'
 
         self.folder = folder
-
+        #self.folder = 'C:\\omnetpp-4.6\\runs\\t1677149631011111\\'
         self.ACTIVE_NODES = DDPG_config['ACTIVE_NODES']
 
         self.ACTUM = DDPG_config['ACTUM']
@@ -265,10 +257,10 @@ class OmnetBalancerEnv():
         omnet_wrapper(self)
 
         # read Omnet's output: Delay and Lost
-        print(os.path.exists(self.folder + OMDELAY))
-        om_output = file_to_csv(self.folder + OMDELAY)
+        om_output = file_to_csv(self.folder + OMDELAY )
         self.upd_env_D(csv_to_matrix(om_output, self.ACTIVE_NODES))
         self.upd_env_L(csv_to_lost(om_output))
+
 
         reward = rl_reward(self)
 
@@ -301,16 +293,16 @@ class OmnetLinkweightEnv():
         self.ROUTING = 'Linkweight'
 
         self.folder = folder
-
+        #self.folder = 'C:\\omnetpp-4.6\\runs\\t1677149631011111\\'
         self.ACTIVE_NODES = DDPG_config['ACTIVE_NODES']
 
         self.ACTUM = DDPG_config['ACTUM']
 
-        topology = 'C:\omnetpp-4.6/router/NetworkAll.matrix'
+        topology = 'C:\\omnetpp-4.6\\router\\NetworkAll.matrix'
         self.graph = nx.Graph(np.loadtxt(topology, dtype=int))
         if self.ACTIVE_NODES != self.graph.number_of_nodes():
             return False
-        ports = 'C:\omnetpp-4.6/router/NetworkAll.ports'
+        ports = 'C:\\omnetpp-4.6\\router\\NetworkAll.ports'
         self.ports = np.loadtxt(ports, dtype=int)
 
         self.a_dim = self.graph.number_of_edges()
@@ -460,10 +452,10 @@ class OmnetLinkweightEnv():
         omnet_wrapper(self)
 
         # read Omnet's output: Delay and Lost
-        print(os.path.exists(self.folder + OMDELAY))
         om_output = file_to_csv(self.folder + OMDELAY)
         self.upd_env_D(csv_to_matrix(om_output, self.ACTIVE_NODES))
         self.upd_env_L(csv_to_lost(om_output))
+
 
         reward = rl_reward(self)
 
@@ -497,10 +489,12 @@ class OmnetLinkweightEnv():
         omnet_wrapper(self)
 
         # read Omnet's output: Delay and Lost
-        print(os.path.exists(self.folder + OMDELAY))
         om_output = file_to_csv(self.folder + OMDELAY)
         self.upd_env_D(csv_to_matrix(om_output, self.ACTIVE_NODES))
         self.upd_env_L(csv_to_lost(om_output))
+        
+        #delay = self.calcDelay()
+        #self.upd_env_D(delay)
 
         reward = rl_reward(self)
 
