@@ -383,15 +383,15 @@ class OmnetLinkweightEnv():
 
     # 根据权重，重新计算route
     def upd_env_R(self):
-        weights = {}
+        weights = {('1', '2'): 0.5, ('2', '3'): 0.7}
 
         for e, w in zip(self.graph.edges(), self.env_W):
             weights[e] = w
 
         weights = {k: v for k, v in weights.items() if v is not None}
         weights = {(k[0], k[1]): v for k, v in weights.items()}
-        nx.set_edge_attributes(self.graph, 'weight', weights)
-
+        #nx.set_edge_attributes(self.graph, 'weight', weights)
+        nx.set_edge_attributes(self.graph, 'weight', list(weights.items()))   
         routing_nodes = np.full([self.ACTIVE_NODES]*2, -1.0, dtype=int)
         routing_ports = np.full([self.ACTIVE_NODES]*2, -1.0, dtype=int)
 
